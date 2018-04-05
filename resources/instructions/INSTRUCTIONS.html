@@ -1,0 +1,31 @@
+<p style="text-align: center;"><strong>Instructions for using this tool:</strong></p>
+<p><b>1.: Configure your parameters in the 'Config'-Tab. This includes:</b></p>
+<p>- Setting your Serial settings (COM/BAUD/PARITY/SB). These settings must fit your Microcontroller-UART configuration.</p>
+<p>- Activating Logging and/or Measurement files</p>
+<p>- Configuring your desired measurement mode (CONTINUOUS,TRIGGER,SINGLESHOT)</p>
+<p>- Configuring the amount of time-bytes your microcontroller sends. Usually this will be 16-Bits, so 2 Bytes.</p>
+
+<p><b>2.: Explanations for the terminology used in Configuration-Tab:</b></p>
+<p>- COM-Port: The Serial-port your UART-Adapter uses to communicate with your Microcontroller/PC</p>
+<p>- BAUD-Rate: The specified BAUD-Rate by your UART-configuration (we recommend 1000000 or higher)</p>
+<p>- Stop-Bits: The specified Stop-Bit count by your UART-configuration</p>
+<p>- Parity: The specified parity by your UART-configuration</p>
+<p>- Measurement modes:</p>
+<ul>
+<li>Singleshot: Enter a specified duration (in ticks) in the corresponding textbox. The measurement will then complete after the relative amount of ticks that has been read by the program.</li>
+<li>Trigger: After a certain information Type has been captured (e.g "TASK_SWITCHED_IN, specified by the combobox below), run a singleshot-measurement for the duration specified in the textbox.</li>
+<li>Continuous: The measurement will continue until the 'Stop Analyzing'-button is manually pressed.&nbsp;<span style="color: #ff0000;">Careful: The buffer is not restricted and may overflow. Use this mode with caution.</span></li>
+</ul>
+<p>- Trigger Type: Specification of the Information Type you want to start the Trigger on. This setting is ignore in Singleshot/Continuous mode.</p>
+<p>- Count Time Bytes: The amount of timer Bytes you send via UART (configured in Tracesniffer.h C-Program) As the precision and size varies with the underlying architecture, these bytes must be configured manually accoring to the TraceSniffer-implementation on the running system.</p></p>
+<p>- Save Inc_Tick Data: Since every Increment-tick signal is send over the UART-port, it can be usedful to turn this checkbox off in order to avoid packet spam. (<b>Recommended setting: Off/Unchecked</b>)</p>
+<p>- Activate Logging: Activates debug-logging. If problems occur, a few signals which might be helpful in order to figure out the problems will be logged. (<b>Recommended setting: Off/Unchecked</b>)</p>
+<p>- Save Logfile: Saves the Logfile (only if any action was logged previously)</p>
+<p>- Ticks to Ms Ratio: Decides how many Ticks are sent per Millisecond of the program. Default value is 0. Adjust it to your microcontroller settings.</p>
+<p>- Save Configuration: Saves to configuration to sniffconfig.scfg; if no configuration is detected, default.scfg will be used</p>
+
+<p><b>3.: Explanations for the terminology used in Start-Tab:</b></p>
+<p>- Start/Stop Analyzing: Starts/Stops the measurement with current settings provided by the Configuration-Tab</p>
+<p>- Status: Displays status messages according to the State the program is in. Follow the instructions displayed in the messages.</p>
+<p>- Create Plot: Creates a plotly-Style Plot (only if there was a prior measurement or opened measurement. Creating a plot with a big number of elements takes time.</p>
+<p>- Save/Open Measurement: Save the current measurement in order to be able to open it in a later stage.</p>

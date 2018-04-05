@@ -1,0 +1,31 @@
+#---CONFIGURATION FILE FOR TRACESNIFFER---#
+[SERIALCONFIG]
+COM Port: COM4
+Baud Rate: 1000000
+
+[MEASURECONFIG]
+Time Bytes: 2
+Measure Mode: Singleshot
+Selected Trigger: START
+Singleshot Time: 50
+Timervalue to Ms: 0
+
+[CHECKBOXES]
+Logcheckbox: No
+Measurecheckbox: No
+Inctimecheckbox: No
+
+[GUICONFIG]
+Themeselection: Dark
+
+
+#--EXAMPLE Values--#
+#COM followed by an integer; COM4
+#BAUDRATE; integer from 9600 to 2000000
+#TIMER BYTES; integer from 0 - 4
+#Measure mode; choose either Singleshot, Trigger or Continuous
+#Selected Trigger; Choose one from the Instruction-ENUM
+#Singleshot Time; Choose a time to measure in ticks (recommended not to go over 50000)
+#Logcheckbox; Boolean (Yes/No)
+#Measurecheckbox; Boolean (Yes/No)
+#Inctimecheckbox; Boolean (Yes/No)

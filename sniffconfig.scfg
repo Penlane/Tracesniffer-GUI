@@ -1,0 +1,19 @@
+[SERIALCONFIG]
+com port = COM4
+baud rate = 1000000
+
+[MEASURECONFIG]
+time bytes = 2
+measure mode = Trigger
+selected trigger = START
+singleshot time = 3000
+timervalue to ms = 0
+
+[CHECKBOXES]
+logcheckbox = False
+measurecheckbox = False
+inctimecheckbox = False
+
+[GUICONFIG]
+themeselection = Dark
+
