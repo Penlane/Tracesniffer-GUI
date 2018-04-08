@@ -704,6 +704,7 @@ class TraceTabs(QWidget):
             self.fillTable()   
         self.measurementIsRunning = False
         self.setStartStopButtonStyle() 
+        self.enableButtons()
     
     def toggleAnalyzing(self):
         print('Deciding wether to Start/Stop Analyzing')
