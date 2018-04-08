@@ -29,3 +29,13 @@
 <p>- Status: Displays status messages according to the State the program is in. Follow the instructions displayed in the messages.</p>
 <p>- Create Plot: Creates a plotly-Style Plot (only if there was a prior measurement or opened measurement. Creating a plot with a big number of elements takes time.</p>
 <p>- Save/Open Measurement: Save the current measurement in order to be able to open it in a later stage.</p>
+<br><br>
+
+<p style="text-align: center;"><strong>Instructions on implementing the TraceSniffer-Plugin</strong></p>
+<p>1.: Include the tracesniffing.h into your FreeRTOSConfig.h.<strong></strong></p>
+<p>2.: Implement a function for sending a byte over UART via interrupt and buffered threw a FIFO.Insert it behind #define sendByteOverInterface().</p>
+<p>3.: Implement a function for sending a string over UART via interrupt and buffered threw a FIFO.Insert it behind #define sendStringOverInterface().</p>
+<p>4.: Add a readout of the used timer count register behind #define sendSystemTime sendByteOverInterface(xTaskGetTickCount()&gt;&gt;8);sendByteOverInterface(xTaskGetTickCount()); (0-4 Bytes, starting with the big endian).</p>
+<p>5.: Insert traceSTART() at the begin of your main before you initialise any FreeRTOS constructs (like queues and tasks).</p>
+<p>You will find the tracesniffing.h and an implemented FIFO-Buffer in the Source of the Project. Credit for the FIFO goes to <span style="color: #82bddc;"><a href="https://www.mikrocontroller.net/articles/FIFO" target="_blank" rel="noopener">https://www.mikrocontroller.net/articles/FIFO.</a></span></p>
+<p>If you are having problems with the implementation of the list above, have a look into "Examples". Maybe you will find an existing example for your &mu;C. If you have a running example for an unlisted &mu;C, or an improvement to an existing one, feel free to contact us and we make sure to add it.</p>

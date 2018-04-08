@@ -12,12 +12,12 @@ import ganttForTraceSniffer as gfs
 from datetime import datetime
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox
 from PyQt5.QtWidgets import QProgressBar, QTabWidget, QComboBox, QLineEdit, QLabel, QScrollArea, QFileDialog
-from PyQt5.QtWidgets import QSizePolicy, QHeaderView, QMessageBox, QStyleFactory
+from PyQt5.QtWidgets import QSizePolicy, QHeaderView, QMessageBox
 from PyQt5.QtCore import QTimer
 from PyQt5.Qt import QTextEdit, QTableWidget, QTableWidgetItem
 from PyQt5 import QtCore
 from PyQt5 import QtWebEngineWidgets
-from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor, QFont
 
 informationEnum =('','','','','','','','','','','','','','','START','END','TASK_SWITCHED_IN','INCREASE_TICK_COUNT','LOW_POWER_IDLE_BEGIN','LOW_POWER_IDLE_END','TASK_SWITCHED_OUT','TASK_PRIORITY_INHERIT','TASK_PRIORITY_DISINHERIT','BLOCKING_ON_QUEUE_RECEIVE','BLOCKING_ON_QUEUE_SEND','MOVED_TASK_TO_READY_STATE',
 'POST_MOVED_TASK_TO_READY_STATE','QUEUE_CREATE','QUEUE_CREATE_FAILED','CREATE_MUTEX','CREATE_MUTEX_FAILED','GIVE_MUTEX_RECURSIVE','GIVE_MUTEX_RECURSIVE_FAILED','TAKE_MUTEX_RECURSIVE','TAKE_MUTEX_RECURSIVE_FAILED','CREATE_COUNTING_SEMAPHORE','CREATE_COUNTING_SEMAPHORE_FAILED','QUEUE_SEND','QUEUE_SEND_FAILED','QUEUE_RECEIVE','QUEUE_PEEK','QUEUE_PEEK_FROM_ISR','QUEUE_RECEIVE_FAILED','QUEUE_SEND_FROM_ISR','QUEUE_SEND_FROM_ISR_FAILED','QUEUE_RECEIVE_FROM_ISR','QUEUE_RECEIVE_FROM_ISR_FAILED','QUEUE_PEEK_FROM_ISR_FAILED','QUEUE_DELETE',
@@ -85,6 +85,7 @@ class SerialThread(QtCore.QThread):
                         self.myCnt = 0
                         self.serialHandler.close()
                         self.stop()
+                    continue
                 length = self.serialHandler.read(1)
                 self.snifferPayload.messageLength = int.from_bytes(length,byteorder='big',signed=False)
                 if(self.snifferPayload.messageLength > 20):
@@ -164,6 +165,7 @@ class TraceTabs(QWidget):
         self.failCnt = 0
         self.purge = 0
         self.currentTheme = 'Dark'
+        self.measurementIsRunning = 0
         
         # Load configuration
         self.guiConfig = configparser.ConfigParser()
@@ -249,13 +251,20 @@ class TraceTabs(QWidget):
         
         # Create Widgets for H1layout
         # First buttons
-        self.startAnalyzingButt = QPushButton('Start Analyzing')
-        self.stopAnalyzingButt = QPushButton('Stop Analyzing')
+        self.startStopAnalyzingButt = QPushButton('START')
+        self.startStopAnalyzingButt.clicked.connect(self.toggleAnalyzing)
+        self.startStopAnalyzingButt.setStyleSheet('QPushButton {border: 2px solid; border-color: tomato; border-radius:100px}'
+                                      'QPushButton:pressed {border: 2px solid; border-color: red; background-color: maroon; border-radius:100px}'
+                                      'QPushButton:hover {border: 2px solid; border-color: white; border-radius:100px}'
+                                      'QPushButton:focus {border: 2px solid; border-color: red; border-radius:100px}'
+                                      )
+        self.startStopFont = QFont()
+        self.startStopFont.setPointSize(20)
+        self.startStopAnalyzingButt.setFont(self.startStopFont)
         
-        
+        self.startStopAnalyzingButt.setFixedSize(200,200)
         # Add Widgets to H1layout
-        self.tabStart.H1layout.addWidget(self.startAnalyzingButt)
-        self.tabStart.H1layout.addWidget(self.stopAnalyzingButt)
+        self.tabStart.H1layout.addWidget(self.startStopAnalyzingButt)
         
         # Spacing for H1layout
         self.tabStart.H1layout.addSpacing(5)
@@ -456,8 +465,6 @@ class TraceTabs(QWidget):
         
         #--- SIGNAL/SLOT CONNECTIONS ---#
         # Button Signal/Slot connections
-        self.startAnalyzingButt.clicked.connect(self.startAnalyzing)
-        self.stopAnalyzingButt.clicked.connect(self.stopAnalyzing)
         self.saveLogButt.clicked.connect(self.saveLog)
         self.saveConfigButt.clicked.connect(self.saveConfiguration)
         self.toggleThemeButt.clicked.connect(self.toggleTheme)
@@ -650,74 +657,79 @@ class TraceTabs(QWidget):
         if(len(payloadList) > 0):
             self.fillTable()    
     
-    def startAnalyzing(self):
-        print('Started Analyzing')
-        self.logEvent('start Analyzing clicked - ' + self.selectedMODE)
-        if(self.selectedMODE == 'Continuous'):
-            self.progressShotBar.setMaximum(0)
+    def toggleAnalyzing(self):
+        print('Deciding wether to Start/Stop Analyzing')
+        if self.measurementIsRunning == True:
+            self.displayStatusMessage('Measurement is stopping...')
+            self.measurementIsRunning = False
+            self.setStartStopButtonStyle()
+            self.logEvent('stop Analyzing clicked')     
+            self.progressShotBar.setMaximum(100)
             self.progressShotBar.setMinimum(0)
             self.progressShotBar.setValue(0)
-            self.singleShotTime = 0xFFFFFFFF
-            self.triggerOn = False
-            self.displayStatusMessage('Measuring with Continuousmode')
-                        
-        if(self.selectedMODE == 'Singleshot'):
+            self.serialTimer.stop()
             try:
-                self.singleShotTime = int(self.inputSingleDurBox.text())
-            except ValueError:
-                QMessageBox.about(self,'ERROR','No integer entered, defaulting to 50')
-                self.singleShotTime = 50
-            #self.progressShotBar.setMaximum(self.singleShotTime)
-            self.progressShotBar.setMaximum(0)
-            self.progressShotBar.setMinimum(0)
-            self.progressShotBar.setValue(0)
-            self.progressValue = 0
-            self.triggerOn = False
-            self.displayStatusMessage('Measuring with Singleshotmode, wait for '+str(self.singleShotTime)+'ms.')
-                
-        if(self.selectedMODE == 'Trigger'):
+                self.measureThread.stop()
+                while(self.measureThread.killme == False):
+                    print('Cannot kill, waiting until last measurement is complete')
+                self.serialHandle.close()
+                self.displayStatusMessage('Measurement stopped.')    
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                print (message)
+                self.displayException('Probably a missing Handler')           
+        elif self.measurementIsRunning == False:
+            self.measurementIsRunning = True
+            self.setStartStopButtonStyle()
+            self.logEvent('start Analyzing clicked - ' + self.selectedMODE)
+            self.tabStart.setLayout(self.tabStart.Vlayout)
+            if(self.selectedMODE == 'Continuous'):
+                self.progressShotBar.setMaximum(0)
+                self.progressShotBar.setMinimum(0)
+                self.progressShotBar.setValue(0)
+                self.singleShotTime = 0xFFFFFFFF
+                self.triggerOn = False
+                self.displayStatusMessage('Measuring with Continuousmode')
+                            
+            if(self.selectedMODE == 'Singleshot'):
+                try:
+                    self.singleShotTime = int(self.inputSingleDurBox.text())
+                except ValueError:
+                    QMessageBox.about(self,'ERROR','No integer entered, defaulting to 50')
+                    self.singleShotTime = 50
+                #self.progressShotBar.setMaximum(self.singleShotTime)
+                self.progressShotBar.setMaximum(0)
+                self.progressShotBar.setMinimum(0)
+                self.progressShotBar.setValue(0)
+                self.progressValue = 0
+                self.triggerOn = False
+                self.displayStatusMessage('Measuring with Singleshotmode, wait for '+str(self.singleShotTime)+'ms.')
+                    
+            if(self.selectedMODE == 'Trigger'):
+                try:
+                    self.singleShotTime = int(self.inputSingleDurBox.text())
+                except ValueError:
+                    QMessageBox.about(self,'ERROR','No integer entered, defaulting to 50')
+                    self.singleShotTime = 50
+                self.progressShotBar.setMaximum(0)
+                self.progressShotBar.setMinimum(0)
+                self.progressShotBar.setValue(0)
+                self.triggerOn = True
+                self.displayStatusMessage('Measuring with Triggermode')
             try:
-                self.singleShotTime = int(self.inputSingleDurBox.text())
-            except ValueError:
-                QMessageBox.about(self,'ERROR','No integer entered, defaulting to 50')
-                self.singleShotTime = 50
-            self.progressShotBar.setMaximum(0)
-            self.progressShotBar.setMinimum(0)
-            self.progressShotBar.setValue(0)
-            self.triggerOn = True
-            self.displayStatusMessage('Measuring with Triggermode')
-        try:
-            self.serialHandle = serial.Serial(self.selectedCOM,int(self.selectedBAUD),timeout=None,parity=serial.PARITY_NONE,rtscts=False)
-            self.measureThread = SerialThread(serialHandle = self.serialHandle, singleshotTime = self.singleShotTime, timeByteCount = self.comboTIME.currentIndex(), triggerOn = self.triggerOn, selectedTrigger = self.selectedTRIGGER, saveIncTime = self.saveIncTimeToggleState)
-            self.measureThread.startInterpretationSignal.connect(self.startInterpreter)
-            self.measureThread.start()
-            self.failCnt = 0
-            self.serialTimer.start(5)
-        except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print (message)
-            QMessageBox.about(self,'ERROR','SerialHandle creation issue')
-            self.measureThread.kill()
-               
-    def stopAnalyzing(self):
-        self.displayStatusMessage('Stopped Analyzing')
-        self.logEvent('stop Analyzing clicked')     
-        self.progressShotBar.setMaximum(100)
-        self.progressShotBar.setMinimum(0)
-        self.progressShotBar.setValue(0)
-        self.serialTimer.stop()
-        try:
-            self.measureThread.stop()
-            while(self.measureThread.killme == False):
-                print('Cannot kill, waiting until last measurement is complete')
-            self.serialHandle.close()
-                
-        except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print (message)
-            self.displayException('Probably a missing Handler')
+                self.serialHandle = serial.Serial(self.selectedCOM,int(self.selectedBAUD),timeout=None,parity=serial.PARITY_NONE,rtscts=False)
+                self.measureThread = SerialThread(serialHandle = self.serialHandle, singleshotTime = self.singleShotTime, timeByteCount = self.comboTIME.currentIndex(), triggerOn = self.triggerOn, selectedTrigger = self.selectedTRIGGER, saveIncTime = self.saveIncTimeToggleState)
+                self.measureThread.startInterpretationSignal.connect(self.startInterpreter)
+                self.measureThread.start()
+                self.failCnt = 0
+                self.serialTimer.start(5)
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                print (message)
+                QMessageBox.about(self,'ERROR','SerialHandle creation issue')
+                self.measureThread.kill()
             
     def createPlot(self):
         if(len(payloadList) == 0):
@@ -840,9 +852,11 @@ class TraceTabs(QWidget):
     def toggleTheme(self):
         if(self.currentTheme == 'Light'):
             self.loadTheme('Dark')
+            self.startStopAnalyzingButt.setStyleSheet('QPushButton:focus {border: 2px solid; border-color: limegreen; background-color: #31363b; border-radius:100px}')
         else:
             self.loadTheme('Light')
-            
+            self.startStopAnalyzingButt.setStyleSheet('QPushButton:focus {border: 2px solid; border-color: limegreen; background-color: white; border-radius:100px}')
+        self.setStartStopButtonStyle()   
     def loadTheme(self,setTheme):
         if setTheme == 'Dark':
             app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
@@ -850,6 +864,36 @@ class TraceTabs(QWidget):
         else:
             app.setStyleSheet('')
             self.currentTheme = 'Light'
+            
+    def setStartStopButtonStyle(self):#change the StartStopButton Stylesheets. We either need it to be start or stop, theme is provided by currentTheme var
+        if self.measurementIsRunning == False:#We are in Stop mode, so we change button to Start
+            if self.currentTheme == 'Dark': #Todo: Improve the theming, this is just a hotfix so the Button looks 'ok' in both themes.
+                self.startStopAnalyzingButt.setStyleSheet('QPushButton {border: 2px solid; border-color: limegreen; border-radius:100px}'
+                                  'QPushButton:pressed {border: 2px solid; border-color: green; background-color: forestgreen; border-radius:100px}'
+                                  'QPushButton:hover {border: 2px solid; border-color: white; border-radius:100px}'
+                                  'QPushButton:focus {border: 2px solid; border-color: limegreen; background-color: #31363b; border-radius:100px}'
+                                  )
+            else:
+                self.startStopAnalyzingButt.setStyleSheet('QPushButton {border: 2px solid; border-color: limegreen; border-radius:100px}'
+                                  'QPushButton:pressed {border: 2px solid; border-color: green; background-color: forestgreen; border-radius:100px}'
+                                  'QPushButton:hover {border: 2px solid; border-color: white; border-radius:100px}'
+                                  'QPushButton:focus {border: 2px solid; border-color: limegreen; background-color: white; border-radius:100px}'
+                                  )
+            self.startStopAnalyzingButt.setText('START')
+        elif self.measurementIsRunning == True:# We are in Start mode, so we change button to Stop
+            if self.currentTheme == 'Dark':
+                self.startStopAnalyzingButt.setStyleSheet('QPushButton {border: 2px solid; border-color: tomato; border-radius:100px}'
+                                              'QPushButton:pressed {border: 2px solid; border-color: red; background-color: maroon; border-radius:100px}'
+                                              'QPushButton:hover {border: 2px solid; border-color: white; border-radius:100px}'
+                                              'QPushButton:focus {border: 2px solid; border-color: red; background-color: #31363b; border-radius:100px}'
+                                              )
+            else:
+                self.startStopAnalyzingButt.setStyleSheet('QPushButton {border: 2px solid; border-color: tomato; border-radius:100px}'
+                                  'QPushButton:pressed {border: 2px solid; border-color: red; background-color: maroon; border-radius:100px}'
+                                  'QPushButton:hover {border: 2px solid; border-color: white; border-radius:100px}'
+                                  'QPushButton:focus {border: 2px solid; border-color: red; background-color: white; border-radius:100px}'
+                                  )    
+            self.startStopAnalyzingButt.setText('STOP')              
     
     #---CREATE COMBOBOX Callbacks---#
     def comboCOMchanged(self):
@@ -989,7 +1033,6 @@ def OS_SerialPortList():
         except (OSError, serial.SerialException):
             pass
     return result
-
 
 if __name__ == '__main__':
     configReg = re.compile(': (.*)')
