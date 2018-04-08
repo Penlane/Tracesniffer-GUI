@@ -18,6 +18,7 @@ from PyQt5.Qt import QTextEdit, QTableWidget, QTableWidgetItem
 from PyQt5 import QtCore
 from PyQt5 import QtWebEngineWidgets
 from PyQt5.QtGui import QPalette, QColor, QFont
+from numpy.compat.setup import configuration
 
 informationEnum =('','','','','','','','','','','','','','','START','END','TASK_SWITCHED_IN','INCREASE_TICK_COUNT','LOW_POWER_IDLE_BEGIN','LOW_POWER_IDLE_END','TASK_SWITCHED_OUT','TASK_PRIORITY_INHERIT','TASK_PRIORITY_DISINHERIT','BLOCKING_ON_QUEUE_RECEIVE','BLOCKING_ON_QUEUE_SEND','MOVED_TASK_TO_READY_STATE',
 'POST_MOVED_TASK_TO_READY_STATE','QUEUE_CREATE','QUEUE_CREATE_FAILED','CREATE_MUTEX','CREATE_MUTEX_FAILED','GIVE_MUTEX_RECURSIVE','GIVE_MUTEX_RECURSIVE_FAILED','TAKE_MUTEX_RECURSIVE','TAKE_MUTEX_RECURSIVE_FAILED','CREATE_COUNTING_SEMAPHORE','CREATE_COUNTING_SEMAPHORE_FAILED','QUEUE_SEND','QUEUE_SEND_FAILED','QUEUE_RECEIVE','QUEUE_PEEK','QUEUE_PEEK_FROM_ISR','QUEUE_RECEIVE_FAILED','QUEUE_SEND_FROM_ISR','QUEUE_SEND_FROM_ISR_FAILED','QUEUE_RECEIVE_FROM_ISR','QUEUE_RECEIVE_FROM_ISR_FAILED','QUEUE_PEEK_FROM_ISR_FAILED','QUEUE_DELETE',
@@ -35,6 +36,7 @@ communicationQueue = queue.Queue()
 class SerialThread(QtCore.QThread):
 
     startInterpretationSignal = QtCore.pyqtSignal()
+    stopMe = QtCore.pyqtSignal()
     
     def kill(self):
         self.isReading = False
@@ -42,8 +44,9 @@ class SerialThread(QtCore.QThread):
         
     def stop(self):
         self.isReading = False
+        self.isWaiting = False
     
-    def __init__(self, serialHandle, singleshotTime, timeByteCount, triggerOn, selectedTrigger, saveIncTime, parent=None):
+    def __init__(self, serialHandle, singleshotTime, timeByteCount, triggerOn, waitResetOn, selectedTrigger, saveIncTime, parent=None):
         super(SerialThread, self).__init__(parent)
         self.serialHandler = serialHandle
         self.singleshotTime = singleshotTime
@@ -52,13 +55,37 @@ class SerialThread(QtCore.QThread):
         self.saveIncTime = saveIncTime
         self.selectedTrigger = selectedTrigger
         self.snifferCnt = 0
+        self.waitResetOn = waitResetOn
         self.myCnt = 0
         self.failCnt = 0
+        self.waitCnt = 0
+        # Todo: Fix timeout
+        self.timeOut = 100000
         self.isReading = True
+        self.isWaiting = True
         self.killme = False
-        payloadList.clear()
+        payloadList.clear() 
 
     def run(self):
+        # Todo: Improve Stop-handling
+        if(self.waitResetOn == True):
+            self.resetCnt = 0
+            self.timeOutCnt = 0
+            while(self.resetCnt < 5 and self.isWaiting == True):
+                print('Waiting for Reset')
+                if(self.serialHandler.read(1) == b'\x00' and self.killme == False):
+                    self.resetCnt = self.resetCnt + 1
+                    self.timeOutCnt = self.timeOutCnt + 1
+                    if(self.timeOutCnt > self.timeOut):
+                        print('Timeout Occured! Please Stop the Thread!!!')
+                        self.serialHandler.close()
+                        self.isReading = False
+                        self.killme = True
+                        self.isWaiting = False
+                        self.stopMe.emit()
+                else:
+                    self.resetCnt = 0
+            print('I am free! Starting measurement')
         while (self.isReading):
             self.killme = False
             self.byteBuffer = (self.serialHandler.read(1))
@@ -92,7 +119,7 @@ class SerialThread(QtCore.QThread):
                     self.snifferPayload.infoType = 'TOO_LONG'
                     self.snifferPayload.messageLength = 0
                     self.snifferPayload.message = 'CONTINUE'
-                    return
+                    continue #fix crash 
                 self.snifferPayload.message="";
                 if infoID in queueInfoTuple:
                     value = self.serialHandler.read(1)
@@ -126,8 +153,8 @@ class SerialThread(QtCore.QThread):
                         payloadList.append(self.snifferPayload)
                 else:
                     payloadList.append(self.snifferPayload)
-        self.killme = True        
-
+        self.killme = True
+          
 class TraceSnifferMain(QMainWindow):
     
     def __init__(self):
@@ -156,6 +183,7 @@ class TraceTabs(QWidget):
         self.saveLogToggleState = 0
         self.saveMeasToggleState = 0
         self.saveIncTimeToggleState = 0
+        self.waitResetCheckToggleState = 0
         self.writePayload = PayloadData()
         self.logPayload = PayloadData()
         self.singleShotTime = 0
@@ -281,11 +309,16 @@ class TraceTabs(QWidget):
         self.openMeasButt.clicked.connect(self.openMeasurement)
         self.createPlotButt = QPushButton('Create Plot')
         self.createPlotButt.clicked.connect(self.createPlot)
+        self.waitResetCheck = QCheckBox('Wait for uC Reset')
+        self.waitResetCheck.stateChanged.connect(self.waitResetCheckToggle)  
+        # Set Init Value for checkbox
+        self.waitResetCheck.setChecked(self.configData.waitResetCheckbox)
 
         # Add Widgets to H2layout        
         self.tabStart.H2layout.addWidget(self.statusLabel)
         self.tabStart.H2layout.addWidget(self.statusBox)
         self.tabStart.H2layout.addSpacing(40)
+        self.tabStart.H2layout.addWidget(self.waitResetCheck)
         self.tabStart.H2layout.addWidget(self.createPlotButt)
         self.tabStart.H2layout.addWidget(self.saveMeasButt)
         self.tabStart.H2layout.addWidget(self.openMeasButt)
@@ -308,38 +341,6 @@ class TraceTabs(QWidget):
         
         self.tabStart.setLayout(self.tabStart.Vlayout)
             
-        
-        # Create Plot Tab --------------------###    
-        # Create Layouts
-        self.tabPlotVlayout = QVBoxLayout()
-        self.tabPlotH1layout = QHBoxLayout()
-        self.tabPlotH1layout.setSpacing(15)
-        #------------------------------------
-         
-        # Create Widgets for H1layout
-        # First buttons
-        self.clearScreenButt = QPushButton('Clear Screen')
-        self.stopDisplayButt = QPushButton('Stop Display')
-        self.clearScreenButt.clicked.connect(self.clearScreen)
-        self.stopDisplayButt.clicked.connect(self.stopDisplay)
-         
-        # Add Widgets to H1layout
-        self.tabPlotH1layout.addWidget(self.clearScreenButt)
-        self.tabPlotH1layout.addWidget(self.stopDisplayButt)
- 
-        # Spacing for H1layout
-        self.tabStart.H1layout.addSpacing(30)
-        #------------------------------------
-         
-        # Create Browser
-        self.browser = QtWebEngineWidgets.QWebEngineView()
-        self.browser.load(QtCore.QUrl().fromLocalFile(os.path.join(os.path.abspath(os.path.dirname(__file__)),'resources','img','launch.html')))
-        #------------------------------------
-         
-        #self.tabPlotVlayout.addLayout(self.tabPlotH1layout)
-        self.tabPlotVlayout.addWidget(self.browser)
-         
-        self.tabPlot.setLayout(self.tabPlotVlayout)
         
         # Create Table Tab --------------------###    
         # Create Layouts
@@ -387,7 +388,36 @@ class TraceTabs(QWidget):
         self.layout.addWidget(self.tabs)
         self.layout.setContentsMargins(5, 5, 5, 5)
         self.setLayout(self.layout)
+         
+        # Create Plot Tab --------------------###    
+        # Create Layouts
+        self.tabPlotVlayout = QVBoxLayout()
+        self.tabPlotH1layout = QHBoxLayout()
+        self.tabPlotH1layout.setSpacing(15)
+        #------------------------------------
+         
+        # Create Widgets for H1layout
+        # First buttons
+        self.clearScreenButt = QPushButton('Clear Screen')
+        self.stopDisplayButt = QPushButton('Stop Display')
+        self.clearScreenButt.clicked.connect(self.clearScreen)
+        self.stopDisplayButt.clicked.connect(self.stopDisplay)
+         
+        # Add Widgets to H1layout
+        self.tabPlotH1layout.addWidget(self.clearScreenButt)
+        self.tabPlotH1layout.addWidget(self.stopDisplayButt)
+         
+        # Create Browser
+        self.browser = QtWebEngineWidgets.QWebEngineView()
+        self.browser.load(QtCore.QUrl().fromLocalFile(os.path.join(os.path.abspath(os.path.dirname(__file__)),'resources','img','launch.html')))
+        #------------------------------------
+         
+        #self.tabPlotVlayout.addLayout(self.tabPlotH1layout)
+        self.tabPlotVlayout.addWidget(self.browser)
+         
+        self.tabPlot.setLayout(self.tabPlotVlayout)  
         
+             
         # Create Configurations Tab --------------------###    
         # Create Layouts
         self.tabConfig.Vlayout = QVBoxLayout()
@@ -619,7 +649,24 @@ class TraceTabs(QWidget):
         plotly.offline.plot(fig, filename=os.path.join(os.path.abspath(os.path.dirname(__file__)),'resources','plots','traceplots.html'),auto_open=False)
         self.displayStatusMessage('Displaying complete')
         self.browser.load(QtCore.QUrl().fromLocalFile(os.path.join(os.path.abspath(os.path.dirname(__file__)),'resources','plots','traceplots.html')))
-        self.tabs.setCurrentIndex(2)           
+        self.tabs.setCurrentIndex(2)      
+        
+    def disableButtons(self):
+        self.openMeasButt.setEnabled(False)
+        self.saveMeasButt.setEnabled(False)
+        self.saveConfigButt.setEnabled(False)
+        self.createPlotButt.setEnabled(False)
+        self.clearTableButt.setEnabled(False)
+        self.saveLogButt.setEnabled(False)
+        
+    def enableButtons(self):
+        self.openMeasButt.setEnabled(True)
+        self.saveMeasButt.setEnabled(True)
+        self.saveConfigButt.setEnabled(True)
+        self.createPlotButt.setEnabled(True)
+        self.clearTableButt.setEnabled(True)
+        self.saveLogButt.setEnabled(True)
+             
     #-------------------------TIMER AREA-------------------------#
     def serialDataTick(self):
         if(communicationQueue.empty() == False):
@@ -655,11 +702,14 @@ class TraceTabs(QWidget):
     #-------------------------SIGNAL/SLOT IMPLEMENTATION-------------------------#
     def startInterpreter(self):
         if(len(payloadList) > 0):
-            self.fillTable()    
+            self.fillTable()   
+        self.measurementIsRunning = False
+        self.setStartStopButtonStyle() 
     
     def toggleAnalyzing(self):
         print('Deciding wether to Start/Stop Analyzing')
         if self.measurementIsRunning == True:
+            self.enableButtons()
             self.displayStatusMessage('Measurement is stopping...')
             self.measurementIsRunning = False
             self.setStartStopButtonStyle()
@@ -680,6 +730,7 @@ class TraceTabs(QWidget):
                 print (message)
                 self.displayException('Probably a missing Handler')           
         elif self.measurementIsRunning == False:
+            self.disableButtons()
             self.measurementIsRunning = True
             self.setStartStopButtonStyle()
             self.logEvent('start Analyzing clicked - ' + self.selectedMODE)
@@ -719,8 +770,9 @@ class TraceTabs(QWidget):
                 self.displayStatusMessage('Measuring with Triggermode')
             try:
                 self.serialHandle = serial.Serial(self.selectedCOM,int(self.selectedBAUD),timeout=None,parity=serial.PARITY_NONE,rtscts=False)
-                self.measureThread = SerialThread(serialHandle = self.serialHandle, singleshotTime = self.singleShotTime, timeByteCount = self.comboTIME.currentIndex(), triggerOn = self.triggerOn, selectedTrigger = self.selectedTRIGGER, saveIncTime = self.saveIncTimeToggleState)
+                self.measureThread = SerialThread(serialHandle = self.serialHandle, singleshotTime = self.singleShotTime, timeByteCount = self.comboTIME.currentIndex(), triggerOn = self.triggerOn, waitResetOn = self.waitResetCheckToggleState, selectedTrigger = self.selectedTRIGGER, saveIncTime = self.saveIncTimeToggleState)
                 self.measureThread.startInterpretationSignal.connect(self.startInterpreter)
+                self.measureThread.stopMe.connect(self.toggleAnalyzing)
                 self.measureThread.start()
                 self.failCnt = 0
                 self.serialTimer.start(5)
@@ -730,6 +782,16 @@ class TraceTabs(QWidget):
                 print (message)
                 QMessageBox.about(self,'ERROR','SerialHandle creation issue')
                 self.measureThread.kill()
+    def waitForReset(self):
+        try:
+            self.logEvent('Wait for Reset Button Pressed')
+            self.displayStatusMessage('Now waiting for User-Reset of uC')
+            self.measureThread.isReading = False
+            self.measureThread.isWaiting = True
+        except Exception as ex:
+            print(ex)
+            self.displayStatusMessage('Something went wrong during waiting for Reset...')
+        
             
     def createPlot(self):
         if(len(payloadList) == 0):
@@ -819,11 +881,18 @@ class TraceTabs(QWidget):
         else:           
             print('Save IncTime disabled')    
             
+    def waitResetCheckToggle(self):
+        self.waitResetCheckToggleState ^= 1
+        if(self.waitResetCheckToggleState == True):           
+            print('Wait for Reset enabled')
+        else:           
+            print('Wait for Reset disabled')    
+            
     def saveConfiguration(self):
         self.writeConfig = configparser.ConfigParser()
         self.writeConfig['SERIALCONFIG'] = {'COM Port': self.selectedCOM, 'Baud Rate': self.selectedBAUD}
         self.writeConfig['MEASURECONFIG'] = {'Time Bytes': self.selectedTIME, 'Measure Mode': self.selectedMODE, 'Selected Trigger': self.selectedTRIGGER, 'Singleshot Time': self.inputSingleDurBox.text(), 'Timervalue to Ms': self.inputTickToMsBox.text()}
-        self.writeConfig['CHECKBOXES'] = {'Logcheckbox': self.saveLogCheck.isChecked(), 'Measurecheckbox': self.saveMeasCheck.isChecked(), 'Inctimecheckbox': self.saveIncTimeCheck.isChecked()}
+        self.writeConfig['CHECKBOXES'] = {'Logcheckbox': self.saveLogCheck.isChecked(), 'Measurecheckbox': self.saveMeasCheck.isChecked(), 'Inctimecheckbox': self.saveIncTimeCheck.isChecked(), 'Waitresetcheckbox': self.waitResetCheck.isChecked()}
         self.writeConfig['GUICONFIG'] = {'Themeselection': self.currentTheme}
         with open('sniffconfig.scfg','w+') as self.cFile:
             try:
@@ -930,7 +999,7 @@ class PayloadData:
         self.message = message
         
 class  ConfigurationData:
-    def __init__(self,comPort = 'COM4', baudRate = 115200, timeBytes = 2, measureMode = 'Singleshot', selectedTrigger = 'START', singleshotTime = 50, timeValueToMs = 0, logCheckbox = False, measureCheckbox = False, incTimeCheckbox = False, currentTheme = 'Dark'):
+    def __init__(self,comPort = 'COM4', baudRate = 115200, timeBytes = 2, measureMode = 'Singleshot', selectedTrigger = 'START', singleshotTime = 50, timeValueToMs = 0, logCheckbox = False, measureCheckbox = False, incTimeCheckbox = False, waitResetCheckbox = False, currentTheme = 'Dark'):
         self.comPort = comPort
         self.baudRate = baudRate
         self.timeBytes = timeBytes
@@ -941,6 +1010,7 @@ class  ConfigurationData:
         self.logCheckbox = logCheckbox
         self.measureCheckbox = measureCheckbox
         self.incTimeCheckbox = incTimeCheckbox
+        self.waitResetCheckbox = waitResetCheckbox
         self.currentTheme = currentTheme
         
     def parseConfig(self,configurationFile):
@@ -954,6 +1024,7 @@ class  ConfigurationData:
         self.logCheckbox = configurationFile.getboolean('CHECKBOXES','Logcheckbox')
         self.measureCheckbox = configurationFile.getboolean('CHECKBOXES','Measurecheckbox')
         self.incTimeCheckbox = configurationFile.getboolean('CHECKBOXES','Inctimecheckbox')
+        self.waitResetCheckbox = configurationFile.getboolean('CHECKBOXES', 'Waitresetcheckbox')
         self.currentTheme = configurationFile['GUICONFIG']['Themeselection']
 
 class switch(object):

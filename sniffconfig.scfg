@@ -13,6 +13,7 @@ timervalue to ms = 0
 logcheckbox = False
 measurecheckbox = False
 inctimecheckbox = False
+waitresetcheckbox = True
 
 [GUICONFIG]
 themeselection = Dark
