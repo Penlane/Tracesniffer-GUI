@@ -18,7 +18,6 @@ from PyQt5.Qt import QTextEdit, QTableWidget, QTableWidgetItem
 from PyQt5 import QtCore
 from PyQt5 import QtWebEngineWidgets
 from PyQt5.QtGui import QPalette, QColor, QFont
-from numpy.compat.setup import configuration
 
 informationEnum =('','','','','','','','','','','','','','','START','END','TASK_SWITCHED_IN','INCREASE_TICK_COUNT','LOW_POWER_IDLE_BEGIN','LOW_POWER_IDLE_END','TASK_SWITCHED_OUT','TASK_PRIORITY_INHERIT','TASK_PRIORITY_DISINHERIT','BLOCKING_ON_QUEUE_RECEIVE','BLOCKING_ON_QUEUE_SEND','MOVED_TASK_TO_READY_STATE',
 'POST_MOVED_TASK_TO_READY_STATE','QUEUE_CREATE','QUEUE_CREATE_FAILED','CREATE_MUTEX','CREATE_MUTEX_FAILED','GIVE_MUTEX_RECURSIVE','GIVE_MUTEX_RECURSIVE_FAILED','TAKE_MUTEX_RECURSIVE','TAKE_MUTEX_RECURSIVE_FAILED','CREATE_COUNTING_SEMAPHORE','CREATE_COUNTING_SEMAPHORE_FAILED','QUEUE_SEND','QUEUE_SEND_FAILED','QUEUE_RECEIVE','QUEUE_PEEK','QUEUE_PEEK_FROM_ISR','QUEUE_RECEIVE_FAILED','QUEUE_SEND_FROM_ISR','QUEUE_SEND_FROM_ISR_FAILED','QUEUE_RECEIVE_FROM_ISR','QUEUE_RECEIVE_FROM_ISR_FAILED','QUEUE_PEEK_FROM_ISR_FAILED','QUEUE_DELETE',
@@ -781,17 +780,7 @@ class TraceTabs(QWidget):
                 message = template.format(type(ex).__name__, ex.args)
                 print (message)
                 QMessageBox.about(self,'ERROR','SerialHandle creation issue')
-                self.measureThread.kill()
-    def waitForReset(self):
-        try:
-            self.logEvent('Wait for Reset Button Pressed')
-            self.displayStatusMessage('Now waiting for User-Reset of uC')
-            self.measureThread.isReading = False
-            self.measureThread.isWaiting = True
-        except Exception as ex:
-            print(ex)
-            self.displayStatusMessage('Something went wrong during waiting for Reset...')
-        
+                self.measureThread.kill()   
             
     def createPlot(self):
         if(len(payloadList) == 0):
