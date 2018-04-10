@@ -792,6 +792,8 @@ class TraceTabs(QWidget):
                 message = template.format(type(ex).__name__, ex.args)
                 print (message)
                 self.displayException('Exception when opening SerialPort. Check Port?')
+                return
+                
             try:
                 self.measureThread = SerialThread(serialHandle = self.serialHandle, singleshotTime = self.singleShotTime, timeByteCount = self.comboTIME.currentIndex(), triggerOn = self.triggerOn, waitResetOn = self.waitResetCheckToggleState, selectedTrigger = self.selectedTRIGGER, saveIncTime = self.saveIncTimeToggleState)
                 self.measureThread.startInterpretationSignal.connect(self.startInterpreter)
