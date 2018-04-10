@@ -49,4 +49,6 @@ Old measurement files (.sniff) can be re-opened and displayed in table-form or p
   in order to prevent packet-spam. (**Recommended setting: Off/Unchecked**)
   - Activate Logging: Activates debug-logging. If problems occur, a few signals which might be helpful will be logged. (**Recommended: Off/Unchecked**)
   - Save Logfile: Saves the Logfile (only if action was logged previously)
+  - Wait for uC Reset: Handle a specific case, where you explicitly want to wait for a complete uC Reset. Only enable this when necessary. (i.e you KNOW that you are going to Reset the uC during the measurement)
+  
   

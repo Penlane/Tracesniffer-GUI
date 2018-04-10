@@ -792,6 +792,14 @@ class TraceTabs(QWidget):
                 message = template.format(type(ex).__name__, ex.args)
                 print (message)
                 self.displayException('Exception when opening SerialPort. Check Port?')
+                self.enableButtons()
+                self.displayStatusMessage('Stopping due to Exception!')
+                self.measurementIsRunning = False
+                self.setStartStopButtonStyle()   
+                self.progressShotBar.setMaximum(100)
+                self.progressShotBar.setMinimum(0)
+                self.progressShotBar.setValue(0)
+                self.serialTimer.stop()
                 return
                 
             try:
