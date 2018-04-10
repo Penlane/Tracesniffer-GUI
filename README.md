@@ -1,7 +1,7 @@
 # Tracesniffer-GUI  WIP
 ![Tracesniffer-logo](resources/img/TraceSnifferLogo_small.png)
 
-This tool provides you with a useable frontend for the existing [Tracesniffer-plugin](https://github.com/adler305/Tracesniffer-Plugin).
+This tool provides you with a useable frontend for the existing [Tracesniffer-Plugin](https://github.com/adler305/Tracesniffer-Plugin).
 You can configure different settings, see all the trace-contents in a table, a plot and save the measurements for later use.
 
 The application is a Work In Progress. The program may crash at any point. No warranty is given on
