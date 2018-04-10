@@ -756,7 +756,7 @@ class TraceTabs(QWidget):
                 self.progressShotBar.setMaximum(0)
                 self.progressShotBar.setMinimum(0)
                 self.progressShotBar.setValue(0)
-                self.singleShotTime = 0xFFFFFFFF
+                self.singleShotTime = 0xFFFFFFFF #Should be enough.
                 self.triggerOn = False
                 self.displayStatusMessage('Measuring with Continuousmode')
                             
@@ -787,17 +787,20 @@ class TraceTabs(QWidget):
                 self.displayStatusMessage('Measuring with Triggermode')
             try:
                 self.serialHandle = serial.Serial(self.selectedCOM,int(self.selectedBAUD),timeout=None,parity=serial.PARITY_NONE,rtscts=False)
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                print (message)
+                self.displayException('Exception when opening SerialPort. Check Port?')
+            try:
                 self.measureThread = SerialThread(serialHandle = self.serialHandle, singleshotTime = self.singleShotTime, timeByteCount = self.comboTIME.currentIndex(), triggerOn = self.triggerOn, waitResetOn = self.waitResetCheckToggleState, selectedTrigger = self.selectedTRIGGER, saveIncTime = self.saveIncTimeToggleState)
                 self.measureThread.startInterpretationSignal.connect(self.startInterpreter)
                 self.measureThread.stopMe.connect(self.toggleAnalyzing)
                 self.measureThread.start()
                 self.failCnt = 0
                 self.serialTimer.start(5)
-            except Exception as ex:
-                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                message = template.format(type(ex).__name__, ex.args)
-                print (message)
-                QMessageBox.about(self,'ERROR','SerialHandle creation issue')
+            except:
+                self.displayException('Exception when creating Thread.')
                 self.measureThread.kill()   
             
     def createPlot(self):
