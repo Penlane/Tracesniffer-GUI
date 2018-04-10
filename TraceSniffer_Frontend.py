@@ -44,6 +44,7 @@ class SerialThread(QtCore.QThread):
     def stop(self):
         self.isReading = False
         self.isWaiting = False
+        self.waitResetOn = False
     
     def __init__(self, serialHandle, singleshotTime, timeByteCount, triggerOn, waitResetOn, selectedTrigger, saveIncTime, parent=None):
         super(SerialThread, self).__init__(parent)
@@ -72,24 +73,30 @@ class SerialThread(QtCore.QThread):
             self.timeOutCnt = 0
             print('Waiting for Reset')
             while(self.resetCnt < 10 and self.isWaiting == True):
-                #print('Waiting for Reset')
-                if(self.serialHandler.read(1) == b'\x00' and self.killme == False):
+                if(self.killme == True):
+                    break
+                if(self.serialHandler.read(1) == b'\x00'):
                     print('Found a zero, counting up')
                     self.resetCnt = self.resetCnt + 1
                     self.timeOutCnt = self.timeOutCnt + 1
                     if(self.timeOutCnt > self.timeOut):
                         print('Timeout Occured! Please Stop the Thread!!!')
-                        self.serialHandler.close()
-                        self.isReading = False
                         self.killme = True
-                        self.isWaiting = False
-                        self.stopMe.emit()
+                        break
                 else:
                     print('Zero streak lost..resetting')
                     self.resetCnt = 0
             print('I am free! Starting measurement')
         while (self.isReading):
-            self.killme = False
+            if(self.killme == True):
+                self.snifferCnt = 0
+                self.myCnt = 0
+                self.serialHandler.close()
+                print('I received the stop-command, am stopping now')
+                self.stop()
+                self.startInterpretationSignal.emit()
+                break
+                #self.startInterpretationSignal.emit()
             self.byteBuffer = (self.serialHandler.read(1))
             print(self.byteBuffer)
             if self.byteBuffer == b'\x00':
@@ -187,6 +194,7 @@ class TraceTabs(QWidget):
         self.saveMeasToggleState = 0
         self.saveIncTimeToggleState = 0
         self.waitResetCheckToggleState = 0
+        self.autoClearCheckToggleState = 0
         self.writePayload = PayloadData()
         self.logPayload = PayloadData()
         self.singleShotTime = 0
@@ -284,10 +292,10 @@ class TraceTabs(QWidget):
         # First buttons
         self.startStopAnalyzingButt = QPushButton('START')
         self.startStopAnalyzingButt.clicked.connect(self.toggleAnalyzing)
-        self.startStopAnalyzingButt.setStyleSheet('QPushButton {border: 2px solid; border-color: tomato; border-radius:100px}'
-                                      'QPushButton:pressed {border: 2px solid; border-color: red; background-color: maroon; border-radius:100px}'
+        self.startStopAnalyzingButt.setStyleSheet('QPushButton {border: 2px solid; border-color: forestgreen; border-radius:100px}'
+                                      'QPushButton:pressed {border: 2px solid; border-color: green; background-color: forestgreen; border-radius:100px}'
                                       'QPushButton:hover {border: 2px solid; border-color: white; border-radius:100px}'
-                                      'QPushButton:focus {border: 2px solid; border-color: red; border-radius:100px}'
+                                      'QPushButton:focus {border: 2px solid; border-color: green; border-radius:100px}'
                                       )
         self.startStopFont = QFont()
         self.startStopFont.setPointSize(20)
@@ -354,10 +362,14 @@ class TraceTabs(QWidget):
         # First buttons
         self.clearTableButt = QPushButton('Clear Table')
         self.stopTableButt = QPushButton('Stop Table')
+        self.autoClearCheck = QCheckBox('Auto Clear')
+        self.autoClearCheck.stateChanged.connect(self.autoClearCheckToggle)  
+        self.autoClearCheck.setChecked(self.configData.autoClearCheckbox)
         
         # Add Widgets to H1layout
         self.tabDetails.H1layout.addWidget(self.clearTableButt)
         #self.tabDetails.H1layout.addWidget(self.stopTableButt)
+        self.tabDetails.H1layout.addWidget(self.autoClearCheck)
         self.clearTableButt.clicked.connect(self.clearTable)
         self.stopTableButt.clicked.connect(self.stopTable)
 
@@ -417,7 +429,6 @@ class TraceTabs(QWidget):
          
         #self.tabPlotVlayout.addLayout(self.tabPlotH1layout)
         self.tabPlotVlayout.addWidget(self.browser)
-         
         self.tabPlot.setLayout(self.tabPlotVlayout)  
         
              
@@ -615,7 +626,7 @@ class TraceTabs(QWidget):
         eventWidth=1#Width of an displayed Event in ms
         overflowCounter=0 #Counts how often the tickOverflowValue is surpassed
         tickOverflow = 65536 
-        timerValueInMs=timerValueInMs_extern
+        timerValueInMs=1/timerValueInMs_extern
         previousElementTickCount=payloadList[0].tickCount #Reads the start Time
         for element in payloadList:
             if element.tickCount < previousElementTickCount: #Checks for overflow
@@ -691,6 +702,9 @@ class TraceTabs(QWidget):
     
     def fillTable(self):
         print('Filling Table with all items in PayloadList')
+        if self.autoClearCheckToggleState == True:
+                self.detailTable.setRowCount(0)
+                self.detailTableIndex = 0
         self.progressShotBar.setMaximum(len(payloadList))
         for self.tablePayload in payloadList:
             self.detailTable.insertRow(self.detailTableIndex)
@@ -723,10 +737,9 @@ class TraceTabs(QWidget):
             self.progressShotBar.setValue(0)
             self.serialTimer.stop()
             try:
-                self.measureThread.stop()
-                while(self.measureThread.killme == False):
-                    print('Cannot kill, waiting until last measurement is complete')
-                self.serialHandle.close()
+                self.measureThread.killme = True
+                while(self.measureThread.isReading == True):
+                    print('Waiting for the Thread to be stopped.')
                 self.displayStatusMessage('Measurement stopped.')    
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -881,12 +894,19 @@ class TraceTabs(QWidget):
             print('Wait for Reset enabled')
         else:           
             print('Wait for Reset disabled')    
+
+    def autoClearCheckToggle(self):
+        self.autoClearCheckToggleState ^= 1
+        if(self.autoClearCheckToggleState == True):           
+            print('Autoclear enabled')
+        else:           
+            print('Autoclear disabled')    
             
     def saveConfiguration(self):
         self.writeConfig = configparser.ConfigParser()
         self.writeConfig['SERIALCONFIG'] = {'COM Port': self.selectedCOM, 'Baud Rate': self.selectedBAUD}
         self.writeConfig['MEASURECONFIG'] = {'Time Bytes': self.selectedTIME, 'Measure Mode': self.selectedMODE, 'Selected Trigger': self.selectedTRIGGER, 'Singleshot Time': self.inputSingleDurBox.text(), 'Timervalue to Ms': self.inputTickToMsBox.text()}
-        self.writeConfig['CHECKBOXES'] = {'Logcheckbox': self.saveLogCheck.isChecked(), 'Measurecheckbox': self.saveMeasCheck.isChecked(), 'Inctimecheckbox': self.saveIncTimeCheck.isChecked(), 'Waitresetcheckbox': self.waitResetCheck.isChecked()}
+        self.writeConfig['CHECKBOXES'] = {'Logcheckbox': self.saveLogCheck.isChecked(), 'Measurecheckbox': self.saveMeasCheck.isChecked(), 'Inctimecheckbox': self.saveIncTimeCheck.isChecked(), 'Waitresetcheckbox': self.waitResetCheck.isChecked(), 'Autoclearcheckbox': self.autoClearCheck.isChecked()}
         self.writeConfig['GUICONFIG'] = {'Themeselection': self.currentTheme}
         with open('sniffconfig.scfg','w+') as self.cFile:
             try:
@@ -993,7 +1013,7 @@ class PayloadData:
         self.message = message
         
 class  ConfigurationData:
-    def __init__(self,comPort = 'COM4', baudRate = 115200, timeBytes = 2, measureMode = 'Singleshot', selectedTrigger = 'START', singleshotTime = 50, timeValueToMs = 0, logCheckbox = False, measureCheckbox = False, incTimeCheckbox = False, waitResetCheckbox = False, currentTheme = 'Dark'):
+    def __init__(self,comPort = 'COM4', baudRate = 115200, timeBytes = 2, measureMode = 'Singleshot', selectedTrigger = 'START', singleshotTime = 50, timeValueToMs = 0, logCheckbox = False, measureCheckbox = False, incTimeCheckbox = False, waitResetCheckbox = False, autoClearCheckbox = False, currentTheme = 'Dark'):
         self.comPort = comPort
         self.baudRate = baudRate
         self.timeBytes = timeBytes
@@ -1005,6 +1025,7 @@ class  ConfigurationData:
         self.measureCheckbox = measureCheckbox
         self.incTimeCheckbox = incTimeCheckbox
         self.waitResetCheckbox = waitResetCheckbox
+        self.autoClearCheckbox = autoClearCheckbox
         self.currentTheme = currentTheme
         
     def parseConfig(self,configurationFile):
@@ -1019,6 +1040,7 @@ class  ConfigurationData:
         self.measureCheckbox = configurationFile.getboolean('CHECKBOXES','Measurecheckbox')
         self.incTimeCheckbox = configurationFile.getboolean('CHECKBOXES','Inctimecheckbox')
         self.waitResetCheckbox = configurationFile.getboolean('CHECKBOXES', 'Waitresetcheckbox')
+        self.autoClearCheckbox = configurationFile.getboolean('CHECKBOXES', 'Autoclearcheckbox')
         self.currentTheme = configurationFile['GUICONFIG']['Themeselection']
 
 class switch(object):

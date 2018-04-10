@@ -4,16 +4,17 @@ baud rate = 1000000
 
 [MEASURECONFIG]
 time bytes = 2
-measure mode = Trigger
+measure mode = Continuous
 selected trigger = START
-singleshot time = 3000
-timervalue to ms = 0
+singleshot time = 30000
+timervalue to ms = 1000
 
 [CHECKBOXES]
 logcheckbox = False
 measurecheckbox = False
 inctimecheckbox = False
 waitresetcheckbox = True
+autoclearcheckbox = True
 
 [GUICONFIG]
 themeselection = Dark

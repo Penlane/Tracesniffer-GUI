@@ -15,6 +15,7 @@ Logcheckbox: No
 Measurecheckbox: No
 Inctimecheckbox: No
 Waitresetcheckbox: No
+Autoclearcheckbox: No
 
 [GUICONFIG]
 Themeselection: Dark
