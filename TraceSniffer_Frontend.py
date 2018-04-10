@@ -70,9 +70,11 @@ class SerialThread(QtCore.QThread):
         if(self.waitResetOn == True):
             self.resetCnt = 0
             self.timeOutCnt = 0
-            while(self.resetCnt < 5 and self.isWaiting == True):
-                print('Waiting for Reset')
+            print('Waiting for Reset')
+            while(self.resetCnt < 10 and self.isWaiting == True):
+                #print('Waiting for Reset')
                 if(self.serialHandler.read(1) == b'\x00' and self.killme == False):
+                    print('Found a zero, counting up')
                     self.resetCnt = self.resetCnt + 1
                     self.timeOutCnt = self.timeOutCnt + 1
                     if(self.timeOutCnt > self.timeOut):
@@ -83,11 +85,13 @@ class SerialThread(QtCore.QThread):
                         self.isWaiting = False
                         self.stopMe.emit()
                 else:
+                    print('Zero streak lost..resetting')
                     self.resetCnt = 0
             print('I am free! Starting measurement')
         while (self.isReading):
             self.killme = False
             self.byteBuffer = (self.serialHandler.read(1))
+            print(self.byteBuffer)
             if self.byteBuffer == b'\x00':
                 self.snifferPayload = PayloadData()
                 self.snifferPayload.tickCount = int.from_bytes(self.serialHandler.read(2),byteorder='big',signed=False)
@@ -138,7 +142,7 @@ class SerialThread(QtCore.QThread):
                 if(self.snifferPayload.infoType == 'TASK_INCREMENT_TICK'):
                     self.snifferCnt+=1
                 self.myCnt = self.myCnt + 1  
-                communicationQueue.put_nowait('INCREMENT_PROGRESSBAR')
+                #communicationQueue.put_nowait('INCREMENT_PROGRESSBAR')
                 if(self.singleshotTime != 0):
                     if(self.snifferCnt > self.singleshotTime):
                         print('Measure complete, stopping thread')
