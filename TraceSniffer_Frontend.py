@@ -86,6 +86,7 @@ class SerialThread(QtCore.QThread):
                 else:
                     print('Zero streak lost..resetting')
                     self.resetCnt = 0
+            communicationQueue.put_nowait('RESET_RECEIVED')
             print('I am free! Starting measurement')
         while (self.isReading):
             if(self.killme == True):
@@ -145,6 +146,7 @@ class SerialThread(QtCore.QThread):
                         print('Wrong Trigger, skipping packet')
                         continue
                     else:
+                        communicationQueue.put_nowait('TRIGGER_FOUND')
                         self.triggerOn = False
                 if(self.snifferPayload.infoType == 'TASK_INCREMENT_TICK'):
                     self.snifferCnt+=1
@@ -688,6 +690,10 @@ class TraceTabs(QWidget):
             if(myEvent == 'FAILED_PACKET_DETECTED'):
                 self.failCnt = self.failCnt+1
                 self.displayStatusMessage('FAILED_PACKET Received! Careful! Count: '+str(self.failCnt))
+            if(myEvent == 'TRIGGER_FOUND'):
+                self.displayStatusMessage('Found a trigger, measuring now!')
+            if(myEvent == 'RESET_RECEIVED'):
+                self.displayStatusMessage('Received a RESET, starting my Measurement...')
 #             if(myEvent == 'INCREMENT_PROGRESSBAR'):
 #                 self.progressValue = self.progressValue + 1
 #                 self.progressShotBar.setValue(self.progressValue)
