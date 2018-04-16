@@ -75,7 +75,7 @@ class SerialThread(QtCore.QThread):
             while(self.resetCnt < 10 and self.isWaiting == True):
                 if(self.killme == True):
                     break
-                if(self.serialHandler.read(1) == b'\x00'):
+                if(self.serialHandler.read(1) == b'\xff'):
                     print('Found a zero, counting up')
                     self.resetCnt = self.resetCnt + 1
                     self.timeOutCnt = self.timeOutCnt + 1
@@ -99,7 +99,7 @@ class SerialThread(QtCore.QThread):
                 #self.startInterpretationSignal.emit()
             self.byteBuffer = (self.serialHandler.read(1))
             print(self.byteBuffer)
-            if self.byteBuffer == b'\x00':
+            if self.byteBuffer == b'\xff':
                 self.snifferPayload = PayloadData()
                 self.snifferPayload.tickCount = int.from_bytes(self.serialHandler.read(2),byteorder='big',signed=False)
                 if(self.timeByteCount == 0):
