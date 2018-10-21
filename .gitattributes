@@ -1,1 +1,1 @@
-resources/* linguist-vendored
+*.py linguist-language=Python

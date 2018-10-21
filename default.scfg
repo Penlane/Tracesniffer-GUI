@@ -1,24 +1,21 @@
 #---CONFIGURATION FILE FOR TRACESNIFFER---#
-[SERIALCONFIG]
-COM Port: COM4
-Baud Rate: 1000000
+[Dummy]
+DummyEntry = DummyVal
+configWaitResetCheck = 1
+configAutoClearCheck = 1
+configBaud = 1000000
+configCom = COM4
+configMode = Singleshot
+configParity = None
+configStopBits = 0
+configTimeBytes = 2
+configTrigger = START
+configLogCheck = 0
+configIncTimeCheck = 0
+configTickToMsLine = 100
+configSingleDurLine = 500
 
-[MEASURECONFIG]
-Time Bytes: 2
-Measure Mode: Singleshot
-Selected Trigger: START
-Singleshot Time: 50
-Timervalue to Ms: 0
 
-[CHECKBOXES]
-Logcheckbox: No
-Measurecheckbox: No
-Inctimecheckbox: No
-Waitresetcheckbox: No
-Autoclearcheckbox: No
-
-[GUICONFIG]
-Themeselection: Dark
 
 
 #--EXAMPLE Values--#

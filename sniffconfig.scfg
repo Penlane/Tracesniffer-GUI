@@ -1,21 +1,18 @@
-[SERIALCONFIG]
-com port = COM4
-baud rate = 1000000
-
-[MEASURECONFIG]
-time bytes = 2
-measure mode = Continuous
-selected trigger = START
-singleshot time = 30000
-timervalue to ms = 1000
-
-[CHECKBOXES]
-logcheckbox = False
-measurecheckbox = False
-inctimecheckbox = False
-waitresetcheckbox = True
-autoclearcheckbox = True
-
-[GUICONFIG]
-themeselection = Dark
+[Dummy]
+DummyEntry = DummyVal
+configDict = {}
+configCurrentTheme = Dark
+configWaitResetCheck = 0
+configAutoClearCheck = 1
+configBaud = 1000000
+configCom = COM4
+configMode = Singleshot
+configParity = DUMMYPARITY
+configStopBits = 99
+configTimeBytes = 2
+configTrigger = START
+configLogCheck = 0
+configIncTimeCheck = 0
+configTickToMsLine = 100
+configSingleDurLine = 600
 
