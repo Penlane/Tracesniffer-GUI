@@ -5,13 +5,9 @@ QScrollBar, QLabel, QButtonGroup,\
 QRadioButton, QPushButton, QDoubleSpinBox,\
 QFileDialog
 from PyQt5 import QtCore, QtGui
-from PyQt5 import QtWebEngineWidgets
-from pprint import pprint
-import plotly
 from qrangeslider import QRangeSlider
 from datetime import datetime
 from collections import defaultdict
-import ganttForTraceSniffer as gfs
 
 from PayloadData import PayloadData, payloadHead
 

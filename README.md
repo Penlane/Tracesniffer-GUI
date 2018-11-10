@@ -13,13 +13,13 @@ try to fix it as soon as we can.
 ## Prerequisites:
 
 Please resolve any missing dependencies if you are not using the binaries provided (currently no binaries are provided).
-This includes (but may not be limited to):
-- PyQt5
-- Plotly
-- CSV
-- QDarkStyle
-- Configparser
-- PySerial
+This includes: (pip install -r requirements.txt)
+construct
+pyserial
+PyQt5==5.9.2
+PyQt5.sip
+numpy==1.15.3
+qdarkstyle
 
 ## Usage-explanation:
 
