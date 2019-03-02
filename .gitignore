@@ -94,3 +94,6 @@ Documentation/html/*
 
 SniffFiles
 SniffFiles/*
+
+node_modules
+node_modules/*

@@ -1,0 +1,31 @@
+{
+  "name": "tracesniffer-application",
+  "version": "1.0.0",
+  "description": "A frontend for the tracesniffer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Penlane/Tracesniffer-GUI.git"
+  },
+  "keywords": [
+    "tracesniffer",
+    "trace",
+    "analyzer",
+    "freertos",
+    "rtos"
+  ],
+  "author": "Penlane",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/Penlane/Tracesniffer-GUI/issues"
+  },
+  "homepage": "https://github.com/Penlane/Tracesniffer-GUI#readme",
+  "devDependencies": {
+    "eslint": "^5.15.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.16.0"
+  }
+}
