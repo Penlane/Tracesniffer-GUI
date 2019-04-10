@@ -136,6 +136,7 @@ class SnifferQueueThread(QtCore.QThread):
         self.timeOut = 100000
         self.isReading = True
         self.killme = False
+        Globals.serialQueue.queue.clear()
         
     ## Endless-loop of the thread. Puts the raw data read from the serialHandle into a 
     #  queue as fast as possible.

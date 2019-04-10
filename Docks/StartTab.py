@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QFont
 
 import serial
+import time
 from SnifferThreads import SnifferInterpretThread,SnifferQueueThread
 from PayloadData import PayloadData
 
@@ -208,6 +209,13 @@ class StartTab(TraceDocks):
                 self.serialHandle.timeout=3
                 self.serialHandle.setDTR(False)
                 self.serialHandle.open()
+                time.sleep(0.1) # Wait for the open process to complete, then flush the buffer
+                self.serialHandle.reset_input_buffer()
+                self.serialHandle.reset_output_buffer()
+                print(self.serialHandle.in_waiting)
+                while self.serialHandle.in_waiting > 0:
+                    self.serialHandle.reset_input_buffer()
+                time.sleep(0.1) # A second sleep, just for safety
             
             # If anything goes wrong, clean up the UI    
             except Exception as ex:
