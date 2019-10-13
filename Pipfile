@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+construct = "*"
+pyqt5 = "==5.9.2"
+pyserial = "*"
+numpy = "==1.15.3"
+qdarkstyle = "*"
+pyqt5-sip = "*"
+
+[requires]
+python_version = "3.7"
