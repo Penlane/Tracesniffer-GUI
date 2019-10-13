@@ -12,14 +12,16 @@ try to fix it as soon as we can.
 
 ## Prerequisites:
 
-Please resolve any missing dependencies if you are not using the binaries provided (currently no binaries are provided).
+Please resolve any missing dependencies if you are not using the binaries provided (currently no binaries are provided).\
 This includes: (pip install -r requirements.txt)
-construct
-pyserial
-PyQt5==5.9.2
-PyQt5.sip
-numpy==1.15.3
-qdarkstyle
+* construct
+* pyserial
+* PyQt5==5.9.2
+* PyQt5.sip
+* numpy==1.15.3
+* qdarkstyle
+
+If you are using pipenv, you can just install all packages normally via ```pipenv install``.
 
 ## Usage-explanation:
 
