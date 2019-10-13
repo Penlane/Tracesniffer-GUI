@@ -14,8 +14,56 @@ class SnifferReader(object):
         self.reset()
         
     def process(self,payload):
+        gplist = Globals.payloadList
         if  self.triggerOn is False:
-            Globals.payloadList.append(payload)
+            try:
+                lastPayload = Globals.payloadList[-1]
+            except IndexError as err:
+                print(err)
+                Globals.payloadList.append(payload)
+                return
+            if payload.payloadHead.packetID > lastPayload.payloadHead.packetID+1:
+                pID = lastPayload.payloadHead.packetID
+                errPayload = {
+                    "payloadHead": {
+                        "packetID": pID,
+                        "informationID": 149, # Start of error
+                        "tickCountHigh": lastPayload.payloadHead.tickCountHigh,
+                        "tickCountLow": lastPayload.payloadHead.tickCountLow,
+                        "timerByteHigh": lastPayload.payloadHead.timerByteHigh,
+                        "timerByteLow": lastPayload.payloadHead.timerByteLow
+                    }
+                }
+                errPayloadStruct = PayloadData.fromDict(None, errPayload)
+                Globals.payloadList.append(errPayloadStruct)
+                while (payload.payloadHead.packetID > pID-1):
+                    pID = pID + 1
+                    if (pID > 255):
+                        pID = 0
+                    
+                    # Build intermediary error payload
+                    errPayload["payloadHead"]["packetID"] = pID
+                    errPayload["payloadHead"]["informationID"] = 148 # Intermediary Error
+                    errPayload["payloadHead"]["tickCountHigh"] = 0
+                    errPayload["payloadHead"]["tickCountLow"] = 0
+                    errPayload["payloadHead"]["timerByteHigh"] = 0
+                    errPayload["payloadHead"]["timerByteLow"] = 0
+                    errPayloadStruct = PayloadData.fromDict(None, errPayload)
+                    
+                    Globals.payloadList.append(errPayloadStruct)
+                    
+                # Build last Error payload
+                errPayload["payloadHead"]["packetID"] = pID
+                errPayload["payloadHead"]["informationID"] = 150 # End of error
+                errPayload["payloadHead"]["tickCountHigh"] = payload.payloadHead.tickCountHigh
+                errPayload["payloadHead"]["tickCountLow"] = payload.payloadHead.tickCountLow
+                errPayload["payloadHead"]["timerByteHigh"] = payload.payloadHead.timerByteHigh
+                errPayload["payloadHead"]["timerByteLow"] = payload.payloadHead.timerByteLow
+                
+                Globals.payloadList[-1] = PayloadData.fromDict(None, errPayload)
+                Globals.payloadList.append(payload)
+            else:
+                Globals.payloadList.append(payload)
     # reset internal state
     def reset(self):
         self.current_id=None
