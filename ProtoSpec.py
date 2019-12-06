@@ -155,7 +155,7 @@ tspDict = {
         145: ('RESERVED',None,False),
         146: ('RESERVED',None,False),
         147: ('RESERVED',None,False),
-        148: ('ERROR',Payload0,False),
+        148: ('PACKETID_ERROR',Payload0,False),
         149: ('ERROR_START',Payload0,False),
         150: ('ERROR_STOP',Payload0,False),
         151: ('ID_OBJECT_LIST',None,False), # Handled separately in SnifferReader due to highly dynamic nature of structure

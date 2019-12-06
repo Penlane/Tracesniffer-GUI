@@ -198,6 +198,15 @@ class PlotTab(TraceDocks):
 		self.end_time=0
 		self.start_time=None
 		for element in payloadList: #for each element in the payload list
+			if element.payloadHead.informationID is 148:
+				continue
+
+			if element.payloadHead.informationID is 149:
+				continue
+
+			if element.payloadHead.informationID is 150:
+				continue
+
 			if hasattr(element, 'payloadHead'):# and hasattr(element,"data1"):
 				if previousElementTickCount-self.getTickCount(element.payloadHead)==65535: #Checks for overflow
 					overflowCounter = overflowCounter+1
@@ -219,6 +228,7 @@ class PlotTab(TraceDocks):
 				#skip Ticks
 				if infoid=='ID_TASK_INCREMENT_TICK':
 					continue
+
 				
 				#Task state from InfoID
 				state2str={
