@@ -223,7 +223,6 @@ class PlotTab(TraceDocks):
 				timestamp=self.getTickCount(element.payloadHead)+\
 				overflowCounter*tickOverflow+\
 				self.getTimerValue(element.payloadHead)*timerValueInMs
-				task_id=element.data1
 				
 				#skip Ticks
 				if infoid=='ID_TASK_INCREMENT_TICK':
@@ -242,6 +241,7 @@ class PlotTab(TraceDocks):
 				if infoid in ['ID_TASK_SWITCHED_OUT',
 				'ID_MOVED_TASK_TO_READY_STATE',
 				'ID_TASK_SWITCHED_IN']:
+					task_id=element.data1
 					self.task_state_changes[task_id].append({"time":timestamp,"state":state2str[infoid]})
 				else:
 					self.task_state_changes[99999].append({"time":timestamp,"state":infoid})
