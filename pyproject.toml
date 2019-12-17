@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "tracesniffer-gui"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+construct = "^2.9.45"
+pyqt5 = "5.9.2"
+pyserial = "^3.4"
+numpy = "1.15.3"
+qdarkstyle = "^2.7"
+pyqt5-sip = "^12.7.0"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.4.4"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
