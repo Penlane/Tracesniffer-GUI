@@ -160,8 +160,10 @@ class TableTab(TraceDocks):
                 if getDataType(self.tablePayload) == 1:
                     self.detailTable.setItem(self.detailTableIndex,4,QTableWidgetItem(str(self.tablePayload.data1)))
                 elif getDataType(self.tablePayload) == 2:
-                    self.detailTable.setItem(self.detailTableIndex,4,QTableWidgetItem(str(self.tablePayload.data2)))
-                    
+                    self.detailTable.setItem(self.detailTableIndex,4,QTableWidgetItem(str(self.tablePayload.data1)+';'+str(self.tablePayload.data2)))
+                elif getDataType(self.tablePayload) == 3:
+                    self.detailTable.setItem(self.detailTableIndex,4,QTableWidgetItem(str(self.tablePayload.data1)+';'+str(self.tablePayload.data2)+';'+str(self.tablePayload.data3)))  
+
             self.detailTable.setItem(self.detailTableIndex,5,QTableWidgetItem('payload'+str(getDataType(self.tablePayload))))
             
             self.detailTableIndex+=1
