@@ -26,6 +26,7 @@ from InstructionsTab import InstructionsTab
 from MemoryTab import MemoryTab
 from PlotTab import PlotTab
 from FilterTab import FilterTab
+from CustomMarkerTab import CustomMarkerTab
 
 import SnifferConfig
 from PayloadData import PayloadData
@@ -146,11 +147,17 @@ class TraceSnifferMain(QMainWindow):
         self.dockFilter.setFilterTabLayout()
         Globals.dockInstanceList.append(self.dockFilter)
         Globals.dockDict['dockFilter'] = self.dockFilter
+
+        self.dockCustomMarker = CustomMarkerTab(self)
+        self.dockCustomMarker.setCustomerMarkerTabLayout()
+        Globals.dockInstanceList.append(self.dockCustomMarker)
+        Globals.dockDict['dockCustomMarker'] = self.dockCustomMarker
         
         self.dockConfig = ConfigTab(self)    
         self.dockConfig.setConfigTabLayout()
         Globals.dockInstanceList.append(self.dockConfig)
         Globals.dockDict['dockConfig'] = self.dockConfig
+
         
         # Raise the startDock as the default dock
         self.dockStart.raise_()
