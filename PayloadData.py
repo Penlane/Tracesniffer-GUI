@@ -67,6 +67,13 @@ Payload3 = Struct(
     "data3" / Int8ub,
 )
 
+PayloadLookup = {
+    "Payload0": Payload0,
+    "Payload1": Payload1,
+    "Payload2": Payload2,
+    "Payload3": Payload3
+}
+
 
 """
 this needs to be in format name : id
