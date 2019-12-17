@@ -96,4 +96,3 @@ class CustomMarkerTab(TraceDocks):
             Globals.tspDict[Globals.tspName2Id[marker]][1] = None
         else:
             Globals.tspDict[Globals.tspName2Id[marker]][1] = PayloadLookup[self.comboBoxLookup[marker].currentText()]
-        print(Globals.tspDict)
