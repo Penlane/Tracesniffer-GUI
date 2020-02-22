@@ -23,6 +23,18 @@ This includes: (pip install -r requirements.txt)
 
 If you are using pipenv, you can just install all packages normally via ```pipenv install``.
 
+## Quick start:
+Using pipenv:
+- ```pipenv shell```
+- ```pipenv install```
+- ```python TraceSniffer_Frontend.py```
+
+Normally:
+- Install prerequisites to global python installation
+- ```python TraceSniffer_Frontend.py```
+
+On Windows, you can use the provided _SNIFFER.bat_ which executes the UI
+
 ## Usage-explanation:
 
 This tool can be used to display the trace-information sent via Tracesniffer-plugin. Usually, the tool must first be configured
@@ -33,13 +45,14 @@ The Measurement can then be plotted directly in the program or saved for later e
 Old measurement files (.sniff) can be re-opened and displayed in table-form or plot.
 
 ## Config-explanation:
+### The preferred way to change the configuration parameters is by navigating to the ConfigTab in the Application and setting the parameters as explained below. Experts can navigate to the SnifferConfig folder and manually adjust the parameters in the *.jcfg files. The "Save Configuration" button will overwrite those files and they will be read on the next program start.
 
 - Serial parameters
   - COM-Port: Your Serialport (choose from a list of open ports)
   - BAUD-Rate: The baud-rate set according to your UART configuration
   - StopBits / Parity: According to UART configuration
 - Measurement Configuration
-  - Measurement mode:
+  - Measurement mode: (**Singleshot** is tested and preferred)
     * Singleshot: Enter a specified duration (in ticks). The measurement will be complete after the relative amount of ticks.
     * Trigger: Select a Trigger Type (see below). The measurement will be complete after a trigger-type has been found and
     the relative amount of ticks (specified in the textbox) have passed.
