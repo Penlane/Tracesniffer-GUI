@@ -24,7 +24,6 @@ class SnifferFilter(QDialog):
     def __init__(self,parent):
         super(SnifferFilter,self).__init__()
         self.parent = parent
-        print('Initiating')
         self.setWindowTitle('SnifferFilter')
         self.filteredPayloadList = []
         self.filteredIdList = []

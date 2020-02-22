@@ -14,7 +14,6 @@ class SnifferStats(QDialog):
     ## The constructor.
     def __init__(self):
         super().__init__()
-        print('Stating')
         
         self.iDList = []
         self.packetCount = 0

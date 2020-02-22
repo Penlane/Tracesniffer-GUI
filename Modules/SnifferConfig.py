@@ -24,7 +24,7 @@ class  ConfigurationData:
     ## Read and parse the specified config format from a file
     #  to update the dictionary      
     def parseConfigFromFile(self):
-        print('Here, we open our sniffConfig.jcfg, and populate our instance with the corresponding attributes which are assigned to a name')
+        print('Loading Config from <TabName>Config.jcfg, and populate our instance with the corresponding attributes which are assigned to a name')
         myDir = os.getcwd()
         configDir = os.path.join(myDir,'SnifferConfig')
         if not os.path.isdir(configDir):
@@ -48,13 +48,14 @@ class  ConfigurationData:
                     
     ## Save the content from the own instance to a json file, corresponding to the name                      
     def saveConfigToFile(self):
-        print('Here, we populate the function by converting our own attributes + our name to a sniffConfig.jcfg')
+        print('Saving own attributes + our name to a <TabName>Config.jcfg')
         myDir = os.getcwd()
         configDir = os.path.join(myDir,'SnifferConfig')
         if not os.path.isdir(configDir):
             os.mkdir(configDir)
             
         openPath = os.path.join(configDir,self.configName+'Config.jcfg')
+        print(openPath)
         try:
             with open(openPath,'w+') as f:
                 meAsDict = copy.deepcopy(self.__dict__)
