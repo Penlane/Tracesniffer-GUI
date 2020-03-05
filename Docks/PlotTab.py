@@ -300,8 +300,14 @@ class PlotTab(TraceDocks):
 	
 	## Get TimerValue from Hader
 	def getTimerValue(self,payloadHeader):
-		return payloadHeader.timerByteHigh << 8 | payloadHeader.timerByteLow
-			
+		if Globals.dockDict['dockConfig'].snifferConfig.configUpDownState == 'Up':
+			return payloadHeader.timerByteHigh << 8 | payloadHeader.timerByteLow
+		elif Globals.dockDict['dockConfig'].snifferConfig.configUpDownState == 'Down':
+			return int(Globals.dockDict['dockConfig'].snifferConfig.configMaxTickCountVal) - (payloadHeader.timerByteHigh << 8 | payloadHeader.timerByteLow)
+		else:
+			self.logger.logEvent('Error in getTimerValue in PlotTab')
+			return 0
+
 	# --- MANDATORY UI FUNCTIONS --- #
 	# -------------------------------# 
 	

@@ -1,7 +1,7 @@
 from Globals import snifferLogList,dockDict
 import Globals
 
-from PyQt5.QtWidgets import QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox
+from PyQt5.QtWidgets import QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton
 from PyQt5.QtWidgets import QComboBox, QLineEdit, QLabel, QFileDialog
 
 import OsSniffer
@@ -38,6 +38,7 @@ class ConfigTab(TraceDocks):
         self.snifferConfig.configTickToMsLine = 1000
         self.snifferConfig.configSingleDurLine = 3000
         self.snifferConfig.configMaxTickCountVal = 65536
+        self.snifferConfig.configUpDownState = 'Up'
         self.snifferConfig.configCurrentTheme = 'Dark'
                 
         # By parsing the config now, we assure that we re-load everything
@@ -80,6 +81,7 @@ class ConfigTab(TraceDocks):
         self.H1SubV2H5Layout = QHBoxLayout()
         self.H1SubV2H6Layout = QHBoxLayout()
         self.H1SubV2H7Layout = QHBoxLayout()
+        self.H1SubV2H8Layout = QHBoxLayout()
             
         #------------------------------------
         
@@ -107,6 +109,7 @@ class ConfigTab(TraceDocks):
         self.labelTRIGGER = QLabel('TRIGGER TYPE')
         self.labelRATIO = QLabel('TICK TO MS RATIO')
         self.labelMaxTickCount = QLabel('MAX TICKOUT VAL')
+        self.labelUpDownCount = QLabel('SELECT UP OR DOWN COUNTER')
         
         self.inputSingleDurBox = QLineEdit()
         self.inputSingleDurBox.setText('Duration(ticks)')
@@ -133,6 +136,9 @@ class ConfigTab(TraceDocks):
         self.comboPARITY.addItems(self.PARITYList)      
         self.comboTRIGGER = QComboBox()
         self.comboTRIGGER.addItems(self.TRIGGERList)     
+
+        self.upCountRadio = QRadioButton('Up',self)
+        self.downCountRadio = QRadioButton('Down', self)
         
         # We need to sync the UI before connecting any slots in order to prevent accidental stateChanges.
         self.syncUiToConfig() 
@@ -163,6 +169,10 @@ class ConfigTab(TraceDocks):
         self.comboSTOP.currentIndexChanged[int].connect(self.comboStopBitsChanged)
         self.comboPARITY.currentIndexChanged[int].connect(self.comboParityChanged) 
         self.comboTRIGGER.currentIndexChanged[int].connect(self.comboTriggerChanged)
+
+        # Radio button connections
+        self.upCountRadio.clicked.connect(self.upCountRadioSelected)
+        self.downCountRadio.clicked.connect(self.downCountRadioSelected)
                 
         # Add the Widgets to the corresponding Layouts
         self.H1SubV1H1Layout.addWidget(self.labelCOM)
@@ -196,6 +206,9 @@ class ConfigTab(TraceDocks):
         self.H1SubV2H6Layout.addWidget(self.inputTickToMsBox)
         self.H1SubV2H7Layout.addWidget(self.labelMaxTickCount)
         self.H1SubV2H7Layout.addWidget(self.inputMaxTickCount)
+        self.H1SubV2H8Layout.addWidget(self.labelUpDownCount)
+        self.H1SubV2H8Layout.addWidget(self.upCountRadio)
+        self.H1SubV2H8Layout.addWidget(self.downCountRadio)
         
         self.H1SubV2Layout.addWidget(self.labelMeasure)
         self.H1SubV2Layout.addLayout(self.H1SubV2H1Layout)
@@ -205,6 +218,7 @@ class ConfigTab(TraceDocks):
         self.H1SubV2Layout.addLayout(self.H1SubV2H5Layout)
         self.H1SubV2Layout.addLayout(self.H1SubV2H6Layout)
         self.H1SubV2Layout.addLayout(self.H1SubV2H7Layout)
+        self.H1SubV2Layout.addLayout(self.H1SubV2H8Layout)
         self.H1SubV2Layout.addStretch()
         
         self.H1layout.addLayout(self.H1SubV1Layout)
@@ -310,6 +324,17 @@ class ConfigTab(TraceDocks):
         self.comboCOM.clear()
         self.comboCOM.addItems(self.COMList)
         self.snifferConfig.configCom = self.COMList[self.comboCOM.currentIndex()]
+
+    #---CREATE RADIO Callbacks---#
+    ## Select upCount
+    def upCountRadioSelected(self):
+        self.snifferConfig.configUpDownState = 'Up'
+        self.logger.logEvent('changed Up/Down Radio to - '+ str(self.snifferConfig.configUpDownState))
+    
+    ## Select downCount
+    def downCountRadioSelected(self):
+        self.snifferConfig.configUpDownState = 'Down'
+        self.logger.logEvent('changed Up/Down Radio to - '+ str(self.snifferConfig.configUpDownState))
       
     #---CONTENT FUNCTIONS---#
     ## CB: Saves all logs saved in the logList to a output-file
@@ -336,6 +361,14 @@ class ConfigTab(TraceDocks):
         
         self.saveLogCheck.setChecked(self.snifferConfig.configLogCheck)
         self.saveIncTimeCheck.setChecked(self.snifferConfig.configIncTimeCheck)
+
+        if self.snifferConfig.configUpDownState == 'Up':
+            self.upCountRadio.click()
+        elif self.snifferConfig.configUpDownState == 'Down':
+            self.downCountRadio.click()
+        else:
+            print('Error, neither up nor down in config')
+
         try:
             self.comboCOM.setCurrentIndex(self.COMList.index(self.snifferConfig.configCom))
         except Exception as valException:
