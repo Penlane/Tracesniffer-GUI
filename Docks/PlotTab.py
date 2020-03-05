@@ -186,7 +186,7 @@ class PlotTab(TraceDocks):
 		filteredPayloads = []
 		eventWidth=1 #Width of an displayed Event in ms
 		overflowCounter=0 #Counts how often the tickOverflowValue is surpassed
-		tickOverflow = 65535 #value of tick-overflow in normal ticks
+		tickOverflow = int(Globals.dockDict['dockConfig'].snifferConfig.configMaxTickCountVal) #value of tick-overflow in normal ticks
 		timerValueInMs=1/timerValueInMs_extern
 		previousElementTickCount=self.getTickCount(payloadList[0].payloadHead) #Reads the start Time
 		previousElement=payloadList[0]
@@ -208,7 +208,7 @@ class PlotTab(TraceDocks):
 				continue
 
 			if hasattr(element, 'payloadHead'):# and hasattr(element,"data1"):
-				if previousElementTickCount-self.getTickCount(element.payloadHead)==65535: #Checks for overflow
+				if previousElementTickCount-self.getTickCount(element.payloadHead)==int(Globals.dockDict['dockConfig'].snifferConfig.configMaxTickCountVal): #Checks for overflow
 					overflowCounter = overflowCounter+1
 				
 				previousElementTickCount=self.getTickCount(element.payloadHead)

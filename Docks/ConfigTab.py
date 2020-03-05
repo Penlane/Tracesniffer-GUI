@@ -37,6 +37,7 @@ class ConfigTab(TraceDocks):
         self.snifferConfig.configIncTimeCheck = 0
         self.snifferConfig.configTickToMsLine = 1000
         self.snifferConfig.configSingleDurLine = 3000
+        self.snifferConfig.configMaxTickCountVal = 65536
         self.snifferConfig.configCurrentTheme = 'Dark'
                 
         # By parsing the config now, we assure that we re-load everything
@@ -78,6 +79,7 @@ class ConfigTab(TraceDocks):
         self.H1SubV2H4Layout = QHBoxLayout()
         self.H1SubV2H5Layout = QHBoxLayout()
         self.H1SubV2H6Layout = QHBoxLayout()
+        self.H1SubV2H7Layout = QHBoxLayout()
             
         #------------------------------------
         
@@ -104,6 +106,7 @@ class ConfigTab(TraceDocks):
         self.labelSINGLETIME = QLabel('MEASUREMENT TIME')
         self.labelTRIGGER = QLabel('TRIGGER TYPE')
         self.labelRATIO = QLabel('TICK TO MS RATIO')
+        self.labelMaxTickCount = QLabel('MAX TICKOUT VAL')
         
         self.inputSingleDurBox = QLineEdit()
         self.inputSingleDurBox.setText('Duration(ticks)')
@@ -112,6 +115,9 @@ class ConfigTab(TraceDocks):
         self.inputTickToMsBox = QLineEdit()
         self.inputTickToMsBox.setText('Set Ticks to Ms Ratio')
         #self.inputTickToMsBox.setMaximumWidth(200)
+
+        self.inputMaxTickCount = QLineEdit()
+        self.inputMaxTickCount.setText('Set Maximum Tickcount Val')
         
         self.comboMODE = QComboBox()
         self.comboMODE.addItems(self.MODEList)  
@@ -147,6 +153,7 @@ class ConfigTab(TraceDocks):
         # Lineedit Signal/Slot connections
         self.inputSingleDurBox.textChanged.connect(self.lineSingleDurChanged)
         self.inputTickToMsBox.textChanged.connect(self.lineTickToMsChanged)
+        self.inputMaxTickCount.textChanged.connect(self.lineMaxTickCountChanged)
         
         # Combobox Signal/Slot connections
         self.comboMODE.currentIndexChanged[int].connect(self.comboModeChanged)     
@@ -187,6 +194,8 @@ class ConfigTab(TraceDocks):
         self.H1SubV2H5Layout.addWidget(self.toggleThemeButt)
         self.H1SubV2H6Layout.addWidget(self.labelRATIO)
         self.H1SubV2H6Layout.addWidget(self.inputTickToMsBox)
+        self.H1SubV2H7Layout.addWidget(self.labelMaxTickCount)
+        self.H1SubV2H7Layout.addWidget(self.inputMaxTickCount)
         
         self.H1SubV2Layout.addWidget(self.labelMeasure)
         self.H1SubV2Layout.addLayout(self.H1SubV2H1Layout)
@@ -195,6 +204,7 @@ class ConfigTab(TraceDocks):
         self.H1SubV2Layout.addLayout(self.H1SubV2H4Layout)
         self.H1SubV2Layout.addLayout(self.H1SubV2H5Layout)
         self.H1SubV2Layout.addLayout(self.H1SubV2H6Layout)
+        self.H1SubV2Layout.addLayout(self.H1SubV2H7Layout)
         self.H1SubV2Layout.addStretch()
         
         self.H1layout.addLayout(self.H1SubV1Layout)
@@ -287,6 +297,11 @@ class ConfigTab(TraceDocks):
     def lineTickToMsChanged(self):
         self.snifferConfig.configTickToMsLine = self.inputTickToMsBox.text()
         self.logger.logEvent('changed Tick To Ms Ratio to - '+ str(self.snifferConfig.configTickToMsLine))
+
+    ## CB: Handle the MaxTickCount lineedit callback (adjust maximum tickcount value)
+    def lineMaxTickCountChanged(self):
+        self.snifferConfig.configMaxTickCountVal = self.inputMaxTickCount.text()
+        self.logger.logEvent('changed Max Tickcount Value to - '+ str(self.snifferConfig.configTickToMsLine))
     
     #---CREATE PUSHBUTTON Callbacks---#    
     ## CB: Handle the refreshCOM pushbutton callback (refresh all com-ports)      
@@ -317,6 +332,7 @@ class ConfigTab(TraceDocks):
     def syncUiToConfig(self):
         self.inputSingleDurBox.setText(str(self.snifferConfig.configSingleDurLine))
         self.inputTickToMsBox.setText(str(self.snifferConfig.configTickToMsLine))
+        self.inputMaxTickCount.setText(str(self.snifferConfig.configMaxTickCountVal))
         
         self.saveLogCheck.setChecked(self.snifferConfig.configLogCheck)
         self.saveIncTimeCheck.setChecked(self.snifferConfig.configIncTimeCheck)
