@@ -247,6 +247,7 @@ class StartTab(TraceDocks):
                                                         saveIncTime = Globals.dockDict['dockConfig'].snifferConfig.configIncTimeCheck)
                 
                 self.interpretThread.startInterpretationSignal.connect(self.startInterpreter)
+                self.interpretThread.timeToKillQueue.connect(self.stopQueue)
                 # Threads are actually started here
                 self.interpretThread.start()
                 self.queueThread.start()
@@ -278,7 +279,12 @@ class StartTab(TraceDocks):
         # Reset the UI
         self.setStartStopButtonStyle() 
         self.enableButtons()
-        
+
+    ## CB; Gets called whenever we needto kill the queue thread
+    def stopQueue(self):
+        print('Time to kill the queue!')
+        self.queueThread.killme = True
+
     ## CB: saveMasurementButt // Saves the current measurement buffered in RAM to a .sniff file   
     def saveMeasurement(self):
         print('Trying to save Measurement')

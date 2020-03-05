@@ -17,6 +17,7 @@ import queue
 class SnifferInterpretThread(QtCore.QThread):
 
     startInterpretationSignal = QtCore.pyqtSignal() # This signal gets called when the measurement has finished
+    timeToKillQueue = QtCore.pyqtSignal() # This signal gets called when it's timeto kill the queue thread
     
     ## Kill the thread by setting the exit-parameter for the endless-loop
     #  and calling the quit-function 
@@ -93,8 +94,11 @@ class SnifferInterpretThread(QtCore.QThread):
                                 self.snifferCnt = self.snifferCnt + 1
                                 print(self.snifferCnt)
                     if self.snifferCnt > self.singleshotTime: # Time to kill the thread
+                        if self.killme == False: # Only emit killSignal to other thread once
+                            self.timeToKillQueue.emit()
                         self.killme = True
-        
+                        
+
         self.killme = True
 
 ## The actual implementation of SnifferQueueThread class
