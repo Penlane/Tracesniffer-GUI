@@ -156,6 +156,7 @@ class SnifferQueueThread(QtCore.QThread):
             if(self.killme == True):
                 self.serialHandler.close()
                 print('QueueThread: I received the stop-command, am stopping now')
+                Globals.serialQueue = queue.Queue()
                 self.stop()
                 break
             
