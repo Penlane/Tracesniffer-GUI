@@ -122,6 +122,7 @@ class TableTab(TraceDocks):
     #  @param fillTableList the list which is to be parsed into the table        
     def fillTable(self,fillTableList):
         print('Filling Table with all items in PayloadList')
+        self.detailTable.scrollToTop() # Scrolls to the top of the table
         self.configAutoClearCheck = True
         if self.configAutoClearCheck == True:
                 self.detailTable.setRowCount(0)
