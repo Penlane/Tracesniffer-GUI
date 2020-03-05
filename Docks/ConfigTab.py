@@ -116,6 +116,7 @@ class ConfigTab(TraceDocks):
         self.comboMODE = QComboBox()
         self.comboMODE.addItems(self.MODEList)  
         self.comboCOM = QComboBox()
+        self.comboCOM.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         self.comboCOM.addItems(self.COMList)   
         self.comboBAUD = QComboBox()
         self.comboBAUD.addItems(self.BAUDList)
