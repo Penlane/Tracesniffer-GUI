@@ -183,7 +183,7 @@ class StartTab(TraceDocks):
                     QMessageBox.about(self,'ERROR','No integer entered, defaulting to 50')
                     self.singleShotTime = 50
                 #self.progressShotBar.setMaximum(self.'dockConfig'.singleShotTime)
-                self.progressShotBar.setMaximum(0)
+                self.progressShotBar.setMaximum(self.singleShotTime)
                 self.progressShotBar.setMinimum(0)
                 self.progressShotBar.setValue(0)
                 self.progressValue = 0
@@ -196,7 +196,7 @@ class StartTab(TraceDocks):
                 except ValueError:
                     QMessageBox.about(self,'ERROR','No integer entered, defaulting to 50')
                     self.singleShotTime = 50
-                self.progressShotBar.setMaximum(0)
+                self.progressShotBar.setMaximum(self.singleShotTime)
                 self.progressShotBar.setMinimum(0)
                 self.progressShotBar.setValue(0)
                 self.triggerOn = True
@@ -247,6 +247,7 @@ class StartTab(TraceDocks):
                                                         saveIncTime = Globals.dockDict['dockConfig'].snifferConfig.configIncTimeCheck)
                 
                 self.interpretThread.startInterpretationSignal.connect(self.startInterpreter)
+                self.interpretThread.incTickSignal.connect(self.incTick)
                 self.interpretThread.timeToKillQueue.connect(self.stopQueue)
                 # Threads are actually started here
                 self.interpretThread.start()
@@ -262,7 +263,12 @@ class StartTab(TraceDocks):
                 self.displayException('Exception when creating Thread.') 
                 self.interpretThread.kill()
                 self.queueThread.kill()  
-                
+
+    ## CB: gets called whenever a tickincrement was found
+    def incTick(self):
+        self.progressShotBar.setValue(self.progressShotBar.value()+1)
+        self.displayStatusMessage('Measuring with '+Globals.dockDict['dockConfig'].snifferConfig.configMode+'mode, wait for '+str(self.singleShotTime)+'ms, current: '+str(self.progressShotBar.value()))
+
     ## CB: startInterpretationSignal // gets called whenever a measurement is finished
     #  @details This function is user-defined. It currently fills the Table of TableDock and updates the filter.
     #  Updating the filter is mandatory!

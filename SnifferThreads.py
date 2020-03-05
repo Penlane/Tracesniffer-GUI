@@ -18,6 +18,7 @@ class SnifferInterpretThread(QtCore.QThread):
 
     startInterpretationSignal = QtCore.pyqtSignal() # This signal gets called when the measurement has finished
     timeToKillQueue = QtCore.pyqtSignal() # This signal gets called when it's timeto kill the queue thread
+    incTickSignal = QtCore.pyqtSignal() # This signal gets called whenever a tick was incremented
     
     ## Kill the thread by setting the exit-parameter for the endless-loop
     #  and calling the quit-function 
@@ -93,6 +94,7 @@ class SnifferInterpretThread(QtCore.QThread):
                             if myPayload.payloadHead.informationID == 44: # We got a tick, so we increment the counter.
                                 self.snifferCnt = self.snifferCnt + 1
                                 print(self.snifferCnt)
+                                self.incTickSignal.emit()
                     if self.snifferCnt > self.singleshotTime: # Time to kill the thread
                         if self.killme == False: # Only emit killSignal to other thread once
                             self.timeToKillQueue.emit()
