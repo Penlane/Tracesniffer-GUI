@@ -45,7 +45,7 @@ class ConfigTab(TraceDocks):
         
         # Create necessary Lists
         self.COMList = OsSniffer.OS_SerialPortList()
-        self.BAUDList = ['9600','57600','115200','1000000','2000000']
+        self.BAUDList = ['110','300','600','1200','2400','4800','9600','14400','19200','38400','57600','115200','128000','256000','921600','1000000','2000000']
         self.STOPList = ['0','1','2']
         self.PARITYList = ['None','Even','Odd']
         self.MODEList = ['Singleshot','Continuous','Trigger']
